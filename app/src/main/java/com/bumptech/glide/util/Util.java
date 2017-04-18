@@ -152,18 +152,18 @@ public final class Util {
   }
 
   /**
-   * Returns {@code true} if called on the main thread, {@code false} otherwise.
-   */
-  public static boolean isOnBackgroundThread() {
-    return !isOnMainThread();
-  }
-
-  /**
    * Creates a {@link Queue} of the given size using Glide's preferred implementation.
    */
   public static <T> Queue<T> createQueue(int size) {
     return new ArrayDeque<>(size);
   }
+
+    /**
+     * Returns {@code true} if called on the main thread, {@code false} otherwise.
+     */
+    public static boolean isOnBackgroundThread() {
+        return !isOnMainThread();
+    }
 
   /**
    * Returns a copy of the given list that is safe to iterate over and perform actions that may
