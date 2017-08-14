@@ -18,7 +18,7 @@ public class DefaultConnectivityMonitorFactory implements ConnectivityMonitorFac
             @NonNull ConnectivityMonitor.ConnectivityListener listener) {
         final int res = context.checkCallingOrSelfPermission("android.permission.ACCESS_NETWORK_STATE");
         final boolean hasPermission = res == PackageManager.PERMISSION_GRANTED;
-        if (hasPermission) {
+        if (hasPermission) {//权限检查
             return new DefaultConnectivityMonitor(context, listener);
         } else {
             return new NullConnectivityMonitor();

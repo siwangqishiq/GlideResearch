@@ -321,4 +321,5 @@ public abstract class ViewTarget<T extends View, Z> extends BaseTarget<Z> {
             }
         }
     }//end inner class
+
 }//end class

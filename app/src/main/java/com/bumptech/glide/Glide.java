@@ -156,7 +156,7 @@ public class Glide implements ComponentCallbacks2 {
                     glide = builder.createGlide();
                     for (GlideModule module : modules) {
                         module.registerComponents(applicationContext, glide.registry);
-                    }
+                    }//end for
                 }
             }
         }

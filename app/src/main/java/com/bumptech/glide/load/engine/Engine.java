@@ -157,7 +157,8 @@ public class Engine implements EngineJobListener,
         EngineKey key = keyFactory.buildKey(model, signature, width, height, transformations,
                 resourceClass, transcodeClass, options);
 
-        EngineResource<?> cached = loadFromCache(key, isMemoryCacheable);
+        //load from memory cache ------ start---------------------
+        EngineResource<?> cached = loadFromCache(key, isMemoryCacheable);//从内存缓存中取数据
         if (cached != null) {
             cb.onResourceReady(cached, DataSource.MEMORY_CACHE);
             if (Log.isLoggable(TAG, Log.VERBOSE)) {
@@ -174,6 +175,7 @@ public class Engine implements EngineJobListener,
             }
             return null;
         }
+        //load from memory cache ------ end ---------------------
 
         EngineJob<?> current = jobs.get(key);
         if (current != null) {
