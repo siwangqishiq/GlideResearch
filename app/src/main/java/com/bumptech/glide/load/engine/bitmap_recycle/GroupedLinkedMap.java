@@ -1,9 +1,7 @@
 package com.bumptech.glide.load.engine.bitmap_recycle;
 
 import android.support.annotation.Nullable;
-
 import com.bumptech.glide.util.Synthetic;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -129,11 +127,11 @@ class GroupedLinkedMap<K extends Poolable, V> {
 
     // Used only for the first item in the list which we will treat specially and which will not
     // contain a value.
-    public LinkedEntry() {
+    LinkedEntry() {
       this(null);
     }
 
-    public LinkedEntry(K key) {
+    LinkedEntry(K key) {
       next = prev = this;
       this.key = key;
     }

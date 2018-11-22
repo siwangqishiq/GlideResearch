@@ -3,25 +3,26 @@ package com.bumptech.glide.load.resource.bitmap;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
-
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.Transformation;
 import com.bumptech.glide.load.engine.Resource;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.util.Util;
+import java.nio.charset.Charset;
+import java.security.MessageDigest;
 
 /**
  * A simple {@link com.bumptech.glide.load.Transformation} for transforming
  * {@link Bitmap}s that abstracts away dealing with
- * {@link com.bumptech.glide.load.engine.Resource} objects for subclasses.
+ * {@link Resource} objects for subclasses.
  *
  * Use cases will look something like this:
  * <pre>
  * <code>
- * public class FillSpace extends BaseBitmapTransformation {
+ * public class FillSpace extends BitmapTransformation {
  *     private static final String ID = "com.bumptech.glide.transformations.FillSpace";
- *     private static final String ID_BYTES = ID.getBytes(STRING_CHARSET_NAME);
+ *     private static final byte[] ID_BYTES = ID.getBytes(Charset.forName("UTF-8"));
  *
  *     {@literal @Override}
  *     public Bitmap transform(BitmapPool pool, Bitmap toTransform, int outWidth, int outHeight) {
@@ -33,7 +34,7 @@ import com.bumptech.glide.util.Util;
  *     }
  *
  *     {@literal @Override}
- *     public void equals(Object o) {
+ *     public boolean equals(Object o) {
  *       return o instanceof FillSpace;
  *     }
  *
@@ -43,33 +44,37 @@ import com.bumptech.glide.util.Util;
  *     }
  *
  *     {@literal @Override}
- *     public void updateDiskCacheKey(MessageDigest messageDigest)
- *         throws UnsupportedEncodingException {
+ *     public void updateDiskCacheKey(MessageDigest messageDigest) {
  *       messageDigest.update(ID_BYTES);
  *     }
  * }
  * </code>
  * </pre>
+ *
+ * <p>Using the fully qualified class name as a static final {@link String} (not
+ * {@link Class#getName()} to avoid proguard obfuscation) is an easy way to implement
+ * {@link #updateDiskCacheKey(MessageDigest)}} correctly. If additional arguments are
+ * required they can be passed in to the constructor of the {@code Transformation} and then used to
+ * update the {@link MessageDigest} passed in to
+ * {@link #updateDiskCacheKey(MessageDigest)}. If arguments are primitive types, they can typically
+ * easily be serialized using {@link java.nio.ByteBuffer}. {@link String} types can be serialized
+ * with {@link String#getBytes(Charset)} using the constant {@link #CHARSET}.
+ *
+ * <p>As with all {@link Transformation}s, all subclasses <em>must</em> implement
+ * {@link #equals(Object)} and {@link #hashCode()} for memory caching to work correctly.
  */
 public abstract class BitmapTransformation implements Transformation<Bitmap> {
 
-  private final BitmapPool bitmapPool;
-
-  public BitmapTransformation(Context context) {
-    this(Glide.get(context).getBitmapPool());
-  }
-
-  public BitmapTransformation(BitmapPool bitmapPool) {
-    this.bitmapPool = bitmapPool;
-  }
-
+  @NonNull
   @Override
-  public final Resource<Bitmap> transform(Resource<Bitmap> resource, int outWidth, int outHeight) {
+  public final Resource<Bitmap> transform(
+      @NonNull Context context, @NonNull Resource<Bitmap> resource, int outWidth, int outHeight) {
     if (!Util.isValidDimensions(outWidth, outHeight)) {
       throw new IllegalArgumentException(
           "Cannot apply transformation on width: " + outWidth + " or height: " + outHeight
               + " less than or equal to zero and not Target.SIZE_ORIGINAL");
     }
+    BitmapPool bitmapPool = Glide.get(context).getBitmapPool();
     Bitmap toTransform = resource.get();
     int targetWidth = outWidth == Target.SIZE_ORIGINAL ? toTransform.getWidth() : outWidth;
     int targetHeight = outHeight == Target.SIZE_ORIGINAL ? toTransform.getHeight() : outHeight;
@@ -101,7 +106,7 @@ public abstract class BitmapTransformation implements Transformation<Bitmap> {
    * this class converts them to be the size of the Bitmap we're going to transform before calling
    * this method.
    *
-   * @param pool        A {@link com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool} that can
+   * @param pool        A {@link BitmapPool} that can
    *                    be used to obtain and return intermediate {@link Bitmap}s used in this
    *                    transformation. For every {@link Bitmap} obtained from the
    *                    pool during this transformation, a {@link Bitmap} must also
@@ -112,6 +117,6 @@ public abstract class BitmapTransformation implements Transformation<Bitmap> {
    * @param outHeight   The ideal height of the transformed bitmap (the transformed height does not
    *                    need to match exactly).
    */
-  protected abstract Bitmap transform(@NonNull BitmapPool pool, @NonNull Bitmap toTransform,
-                                      int outWidth, int outHeight);
+  protected abstract Bitmap transform(
+      @NonNull BitmapPool pool, @NonNull Bitmap toTransform, int outWidth, int outHeight);
 }

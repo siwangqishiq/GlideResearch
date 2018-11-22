@@ -1,8 +1,7 @@
 package com.bumptech.glide.load.resource.bytes;
 
+import android.support.annotation.NonNull;
 import com.bumptech.glide.load.data.DataRewinder;
-
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
@@ -11,12 +10,15 @@ import java.nio.ByteBuffer;
 public class ByteBufferRewinder implements DataRewinder<ByteBuffer> {
   private final ByteBuffer buffer;
 
+  // Public API.
+  @SuppressWarnings("WeakerAccess")
   public ByteBufferRewinder(ByteBuffer buffer) {
     this.buffer = buffer;
   }
 
+  @NonNull
   @Override
-  public ByteBuffer rewindAndGet() throws IOException {
+  public ByteBuffer rewindAndGet() {
     buffer.position(0);
     return buffer;
   }
@@ -27,15 +29,17 @@ public class ByteBufferRewinder implements DataRewinder<ByteBuffer> {
   }
 
   /**
-   * Factory for {@link com.bumptech.glide.load.resource.bytes.ByteBufferRewinder}.
+   * Factory for {@link ByteBufferRewinder}.
    */
   public static class Factory implements DataRewinder.Factory<ByteBuffer> {
 
+    @NonNull
     @Override
     public DataRewinder<ByteBuffer> build(ByteBuffer data) {
       return new ByteBufferRewinder(data);
     }
 
+    @NonNull
     @Override
     public Class<ByteBuffer> getDataClass() {
       return ByteBuffer.class;

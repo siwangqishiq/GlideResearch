@@ -1,7 +1,7 @@
 package com.bumptech.glide.load.engine;
 
+import android.support.annotation.NonNull;
 import android.util.Log;
-
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.Encoder;
 import com.bumptech.glide.load.Key;
@@ -9,12 +9,11 @@ import com.bumptech.glide.load.data.DataFetcher;
 import com.bumptech.glide.load.model.ModelLoader;
 import com.bumptech.glide.load.model.ModelLoader.LoadData;
 import com.bumptech.glide.util.LogTime;
-
 import java.util.Collections;
 
 /**
- * Generates {@link com.bumptech.glide.load.data.DataFetcher DataFetchers} from original source data
- * using registered {@link com.bumptech.glide.load.model.ModelLoader ModelLoaders} and the model
+ * Generates {@link DataFetcher DataFetchers} from original source data
+ * using registered {@link ModelLoader ModelLoaders} and the model
  * provided for the load.
  *
  * <p> Depending on the disk cache strategy, source data may first be written to disk and then
@@ -31,10 +30,10 @@ class SourceGenerator implements DataFetcherGenerator,
   private int loadDataListIndex;
   private DataCacheGenerator sourceCacheGenerator;
   private Object dataToCache;
-  private volatile ModelLoader.LoadData<?> loadData;
+  private volatile LoadData<?> loadData;
   private DataCacheKey originalKey;
 
-  public SourceGenerator(DecodeHelper<?> helper, FetcherReadyCallback cb) {
+  SourceGenerator(DecodeHelper<?> helper, FetcherReadyCallback cb) {
     this.helper = helper;
     this.cb = cb;
   }
@@ -116,7 +115,7 @@ class SourceGenerator implements DataFetcherGenerator,
   }
 
   @Override
-  public void onLoadFailed(Exception e) {
+  public void onLoadFailed(@NonNull Exception e) {
     cb.onDataFetcherFailed(originalKey, e, loadData.fetcher, loadData.fetcher.getDataSource());
   }
 

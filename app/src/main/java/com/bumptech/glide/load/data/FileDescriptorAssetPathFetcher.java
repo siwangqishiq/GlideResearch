@@ -2,7 +2,7 @@ package com.bumptech.glide.load.data;
 
 import android.content.res.AssetManager;
 import android.os.ParcelFileDescriptor;
-
+import android.support.annotation.NonNull;
 import java.io.IOException;
 
 /**
@@ -24,6 +24,7 @@ public class FileDescriptorAssetPathFetcher extends AssetPathFetcher<ParcelFileD
     data.close();
   }
 
+  @NonNull
   @Override
   public Class<ParcelFileDescriptor> getDataClass() {
     return ParcelFileDescriptor.class;

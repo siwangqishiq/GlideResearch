@@ -1,7 +1,7 @@
 package com.bumptech.glide.load.model.stream;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-
 import com.bumptech.glide.load.Option;
 import com.bumptech.glide.load.Options;
 import com.bumptech.glide.load.data.HttpUrlFetcher;
@@ -10,13 +10,14 @@ import com.bumptech.glide.load.model.ModelCache;
 import com.bumptech.glide.load.model.ModelLoader;
 import com.bumptech.glide.load.model.ModelLoaderFactory;
 import com.bumptech.glide.load.model.MultiModelLoaderFactory;
-
 import java.io.InputStream;
 
 /**
  * An {@link com.bumptech.glide.load.model.ModelLoader} for translating {@link
  * com.bumptech.glide.load.model.GlideUrl} (http/https URLS) into {@link InputStream} data.
  */
+// Public API.
+@SuppressWarnings("WeakerAccess")
 public class HttpGlideUrlLoader implements ModelLoader<GlideUrl, InputStream> {
   /**
    * An integer option that is used to determine the maximum connect and read timeout durations (in
@@ -33,13 +34,13 @@ public class HttpGlideUrlLoader implements ModelLoader<GlideUrl, InputStream> {
     this(null);
   }
 
-  public HttpGlideUrlLoader(ModelCache<GlideUrl, GlideUrl> modelCache) {
+  public HttpGlideUrlLoader(@Nullable ModelCache<GlideUrl, GlideUrl> modelCache) {
     this.modelCache = modelCache;
   }
 
   @Override
-  public LoadData<InputStream> buildLoadData(GlideUrl model, int width, int height,
-      Options options) {
+  public LoadData<InputStream> buildLoadData(@NonNull GlideUrl model, int width, int height,
+      @NonNull Options options) {
     // GlideUrls memoize parsed URLs so caching them saves a few object instantiations and time
     // spent parsing urls.
     GlideUrl url = model;
@@ -55,7 +56,7 @@ public class HttpGlideUrlLoader implements ModelLoader<GlideUrl, InputStream> {
   }
 
   @Override
-  public boolean handles(GlideUrl model) {
+  public boolean handles(@NonNull GlideUrl model) {
     return true;
   }
 
@@ -65,6 +66,7 @@ public class HttpGlideUrlLoader implements ModelLoader<GlideUrl, InputStream> {
   public static class Factory implements ModelLoaderFactory<GlideUrl, InputStream> {
     private final ModelCache<GlideUrl, GlideUrl> modelCache = new ModelCache<>(500);
 
+    @NonNull
     @Override
     public ModelLoader<GlideUrl, InputStream> build(MultiModelLoaderFactory multiFactory) {
       return new HttpGlideUrlLoader(modelCache);

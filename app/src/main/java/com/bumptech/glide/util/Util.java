@@ -4,9 +4,10 @@ import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Looper;
-
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import com.bumptech.glide.load.model.Model;
 import com.bumptech.glide.request.target.Target;
-
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,6 +18,8 @@ import java.util.Queue;
  * A collection of assorted utility classes.
  */
 public final class Util {
+  private static final int HASH_MULTIPLIER = 31;
+  private static final int HASH_ACCUMULATOR = 17;
   private static final char[] HEX_CHAR_ARRAY = "0123456789abcdef".toCharArray();
   // 32 bytes from sha-256 -> 64 hex chars.
   private static final char[] SHA_256_CHARS = new char[64];
@@ -28,7 +31,8 @@ public final class Util {
   /**
    * Returns the hex string of the given byte array representing a SHA256 hash.
    */
-  public static String sha256BytesToHex(byte[] bytes) {
+  @NonNull
+  public static String sha256BytesToHex(@NonNull byte[] bytes) {
     synchronized (SHA_256_CHARS) {
       return bytesToHex(bytes, SHA_256_CHARS);
     }
@@ -38,7 +42,8 @@ public final class Util {
   // http://stackoverflow.com/questions/9655181/convert-from-byte-array-to-hex-string-in-java
   // /9655275#9655275
   @SuppressWarnings("PMD.UseVarargs")
-  private static String bytesToHex(byte[] bytes, char[] hexChars) {
+  @NonNull
+  private static String bytesToHex(@NonNull byte[] bytes, @NonNull char[] hexChars) {
     int v;
     for (int j = 0; j < bytes.length; j++) {
       v = bytes[j] & 0xFF;
@@ -56,7 +61,7 @@ public final class Util {
    * removed in Glide 4.0.
    */
   @Deprecated
-  public static int getSize(Bitmap bitmap) {
+  public static int getSize(@NonNull Bitmap bitmap) {
     return getBitmapByteSize(bitmap);
   }
 
@@ -64,7 +69,7 @@ public final class Util {
    * Returns the in memory size of the given {@link Bitmap} in bytes.
    */
   @TargetApi(Build.VERSION_CODES.KITKAT)
-  public static int getBitmapByteSize(Bitmap bitmap) {
+  public static int getBitmapByteSize(@NonNull Bitmap bitmap) {
     // The return value of getAllocationByteCount silently changes for recycled bitmaps from the
     // internal buffer size to row bytes * height. To avoid random inconsistencies in caches, we
     // instead assert here.
@@ -76,7 +81,7 @@ public final class Util {
       // Workaround for KitKat initial release NPE in Bitmap, fixed in MR1. See issue #148.
       try {
         return bitmap.getAllocationByteCount();
-      } catch (NullPointerException e) {
+      } catch (@SuppressWarnings("PMD.AvoidCatchingNPE") NullPointerException e) {
         // Do nothing.
       }
     }
@@ -87,11 +92,11 @@ public final class Util {
    * Returns the in memory size of {@link Bitmap} with the given width, height, and
    * {@link Bitmap.Config}.
    */
-  public static int getBitmapByteSize(int width, int height, Bitmap.Config config) {
+  public static int getBitmapByteSize(int width, int height, @Nullable Bitmap.Config config) {
     return width * height * getBytesPerPixel(config);
   }
 
-  private static int getBytesPerPixel(Bitmap.Config config) {
+  private static int getBytesPerPixel(@Nullable Bitmap.Config config) {
     // A bitmap by decoding a GIF has null "config" in certain environments.
     if (config == null) {
       config = Bitmap.Config.ARGB_8888;
@@ -105,6 +110,9 @@ public final class Util {
       case RGB_565:
       case ARGB_4444:
         bytesPerPixel = 2;
+        break;
+      case RGBA_F16:
+        bytesPerPixel = 8;
         break;
       case ARGB_8888:
       default:
@@ -152,31 +160,38 @@ public final class Util {
   }
 
   /**
+   * Returns {@code true} if called on a background thread, {@code false} otherwise.
+   */
+  public static boolean isOnBackgroundThread() {
+    return !isOnMainThread();
+  }
+
+  /**
    * Creates a {@link Queue} of the given size using Glide's preferred implementation.
    */
+  @NonNull
   public static <T> Queue<T> createQueue(int size) {
     return new ArrayDeque<>(size);
   }
-
-    /**
-     * Returns {@code true} if called on the main thread, {@code false} otherwise.
-     */
-    public static boolean isOnBackgroundThread() {
-        return !isOnMainThread();
-    }
 
   /**
    * Returns a copy of the given list that is safe to iterate over and perform actions that may
    * modify the original list.
    *
-   * <p> See #303 and #375. </p>
+   * <p>See #303, #375, #322, #2262.
    */
-  public static <T> List<T> getSnapshot(Collection<T> other) {
-    // toArray creates a new ArrayList internally and this way we can guarantee entries will not
-    // be null. See #322.
-    List<T> result = new ArrayList<T>(other.size());
+  @NonNull
+  @SuppressWarnings("UseBulkOperation")
+  public static <T> List<T> getSnapshot(@NonNull Collection<T> other) {
+    // toArray creates a new ArrayList internally and does not guarantee that the values it contains
+    // are non-null. Collections.addAll in ArrayList uses toArray internally and therefore also
+    // doesn't guarantee that entries are non-null. WeakHashMap's iterator does avoid returning null
+    // and is therefore safe to use. See #322, #2262.
+    List<T> result = new ArrayList<>(other.size());
     for (T item : other) {
-      result.add(item);
+      if (item != null) {
+        result.add(item);
+      }
     }
     return result;
   }
@@ -186,7 +201,45 @@ public final class Util {
    *
    * @see java.util.Objects#equals
    */
-  public static boolean bothNullOrEqual(Object a, Object b) {
+  public static boolean bothNullOrEqual(@Nullable Object a, @Nullable Object b) {
     return a == null ? b == null : a.equals(b);
+  }
+
+  public static boolean bothModelsNullEquivalentOrEquals(@Nullable Object a, @Nullable Object b) {
+    if (a == null) {
+      return b == null;
+    }
+    if (a instanceof Model) {
+      return ((Model) a).isEquivalentTo(b);
+    }
+    return a.equals(b);
+  }
+
+  public static int hashCode(int value) {
+    return hashCode(value, HASH_ACCUMULATOR);
+  }
+
+  public static int hashCode(int value, int accumulator) {
+    return accumulator * HASH_MULTIPLIER + value;
+  }
+
+  public static int hashCode(float value) {
+    return hashCode(value, HASH_ACCUMULATOR);
+  }
+
+  public static int hashCode(float value, int accumulator) {
+    return hashCode(Float.floatToIntBits(value), accumulator);
+  }
+
+  public static int hashCode(@Nullable Object object, int accumulator) {
+    return hashCode(object == null ? 0 : object.hashCode(), accumulator);
+  }
+
+  public static int hashCode(boolean value, int accumulator) {
+    return hashCode(value ? 1 : 0, accumulator);
+  }
+
+  public static int hashCode(boolean value) {
+    return hashCode(value, HASH_ACCUMULATOR);
   }
 }

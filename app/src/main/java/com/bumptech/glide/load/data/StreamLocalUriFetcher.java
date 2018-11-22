@@ -1,12 +1,10 @@
 package com.bumptech.glide.load.data;
 
-import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.UriMatcher;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.ContactsContract;
-
+import android.support.annotation.NonNull;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +31,11 @@ public class StreamLocalUriFetcher extends LocalUriFetcher<InputStream> {
    */
   private static final int ID_CONTACTS_PHOTO = 4;
   /**
+   * Uri for optimized search of phones by number
+   * (e.g. content://com.android.contacts/phone_lookup/232323232
+   */
+  private static final int ID_LOOKUP_BY_PHONE = 5;
+  /**
    * Match the incoming Uri for special cases which we can handle nicely.
    */
   private static final UriMatcher URI_MATCHER;
@@ -44,6 +47,7 @@ public class StreamLocalUriFetcher extends LocalUriFetcher<InputStream> {
     URI_MATCHER.addURI(ContactsContract.AUTHORITY, "contacts/#/photo", ID_CONTACTS_THUMBNAIL);
     URI_MATCHER.addURI(ContactsContract.AUTHORITY, "contacts/#", ID_CONTACTS_CONTACT);
     URI_MATCHER.addURI(ContactsContract.AUTHORITY, "contacts/#/display_photo", ID_CONTACTS_PHOTO);
+    URI_MATCHER.addURI(ContactsContract.AUTHORITY, "phone_lookup/*", ID_LOOKUP_BY_PHONE);
   }
 
   public StreamLocalUriFetcher(ContentResolver resolver, Uri uri) {
@@ -67,6 +71,7 @@ public class StreamLocalUriFetcher extends LocalUriFetcher<InputStream> {
       case ID_CONTACTS_CONTACT:
         return openContactPhotoInputStream(contentResolver, uri);
       case ID_CONTACTS_LOOKUP:
+      case ID_LOOKUP_BY_PHONE:
         // If it was a Lookup uri then resolve it first, then continue loading the contact uri.
         uri = ContactsContract.Contacts.lookupContact(contentResolver, uri);
         if (uri == null) {
@@ -81,14 +86,9 @@ public class StreamLocalUriFetcher extends LocalUriFetcher<InputStream> {
     }
   }
 
-  @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
   private InputStream openContactPhotoInputStream(ContentResolver contentResolver, Uri contactUri) {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-      return ContactsContract.Contacts.openContactPhotoInputStream(contentResolver, contactUri);
-    } else {
-      return ContactsContract.Contacts.openContactPhotoInputStream(contentResolver, contactUri,
-          true /*preferHighres*/);
-    }
+    return ContactsContract.Contacts.openContactPhotoInputStream(contentResolver, contactUri,
+        true /*preferHighres*/);
   }
 
   @Override
@@ -96,6 +96,7 @@ public class StreamLocalUriFetcher extends LocalUriFetcher<InputStream> {
     data.close();
   }
 
+  @NonNull
   @Override
   public Class<InputStream> getDataClass() {
     return InputStream.class;

@@ -1,7 +1,8 @@
 package com.bumptech.glide.load.model;
 
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.util.Pools.Pool;
-
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.Key;
@@ -10,7 +11,6 @@ import com.bumptech.glide.load.data.DataFetcher;
 import com.bumptech.glide.load.data.DataFetcher.DataCallback;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.util.Preconditions;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,20 +27,21 @@ import java.util.List;
 class MultiModelLoader<Model, Data> implements ModelLoader<Model, Data> {
 
   private final List<ModelLoader<Model, Data>> modelLoaders;
-  private final Pool<List<Exception>> exceptionListPool;
+  private final Pool<List<Throwable>> exceptionListPool;
 
-  MultiModelLoader(List<ModelLoader<Model, Data>> modelLoaders,
-      Pool<List<Exception>> exceptionListPool) {
+  MultiModelLoader(@NonNull List<ModelLoader<Model, Data>> modelLoaders,
+      @NonNull Pool<List<Throwable>> exceptionListPool) {
     this.modelLoaders = modelLoaders;
     this.exceptionListPool = exceptionListPool;
   }
 
   @Override
-  public LoadData<Data> buildLoadData(Model model, int width, int height,
-                                      Options options) {
+  public LoadData<Data> buildLoadData(@NonNull Model model, int width, int height,
+      @NonNull Options options) {
     Key sourceKey = null;
     int size = modelLoaders.size();
     List<DataFetcher<Data>> fetchers = new ArrayList<>(size);
+    //noinspection ForLoopReplaceableByForEach to improve perf
     for (int i = 0; i < size; i++) {
       ModelLoader<Model, Data> modelLoader = modelLoaders.get(i);
       if (modelLoader.handles(model)) {
@@ -51,12 +52,12 @@ class MultiModelLoader<Model, Data> implements ModelLoader<Model, Data> {
         }
       }
     }
-    return !fetchers.isEmpty()
+    return !fetchers.isEmpty() && sourceKey != null
         ? new LoadData<>(sourceKey, new MultiFetcher<>(fetchers, exceptionListPool)) : null;
   }
 
   @Override
-  public boolean handles(Model model) {
+  public boolean handles(@NonNull Model model) {
     for (ModelLoader<Model, Data> modelLoader : modelLoaders) {
       if (modelLoader.handles(model)) {
         return true;
@@ -67,37 +68,42 @@ class MultiModelLoader<Model, Data> implements ModelLoader<Model, Data> {
 
   @Override
   public String toString() {
-    return "MultiModelLoader{" + "modelLoaders=" + Arrays
-        .toString(modelLoaders.toArray(new ModelLoader[modelLoaders.size()])) + '}';
+    return "MultiModelLoader{" + "modelLoaders=" + Arrays.toString(modelLoaders.toArray()) + '}';
   }
 
   static class MultiFetcher<Data> implements DataFetcher<Data>, DataCallback<Data> {
 
     private final List<DataFetcher<Data>> fetchers;
-    private final Pool<List<Exception>> exceptionListPool;
+    private final Pool<List<Throwable>> throwableListPool;
     private int currentIndex;
     private Priority priority;
     private DataCallback<? super Data> callback;
-    private List<Exception> exceptions;
+    @Nullable
+    private List<Throwable> exceptions;
 
-    MultiFetcher(List<DataFetcher<Data>> fetchers, Pool<List<Exception>> exceptionListPool) {
-      this.exceptionListPool = exceptionListPool;
+    MultiFetcher(
+        @NonNull List<DataFetcher<Data>> fetchers,
+        @NonNull Pool<List<Throwable>> throwableListPool) {
+      this.throwableListPool = throwableListPool;
       Preconditions.checkNotEmpty(fetchers);
       this.fetchers = fetchers;
       currentIndex = 0;
     }
 
     @Override
-    public void loadData(Priority priority, DataCallback<? super Data> callback) {
+    public void loadData(
+        @NonNull Priority priority, @NonNull DataCallback<? super Data> callback) {
       this.priority = priority;
       this.callback = callback;
-      exceptions = exceptionListPool.acquire();
+      exceptions = throwableListPool.acquire();
       fetchers.get(currentIndex).loadData(priority, this);
     }
 
     @Override
     public void cleanup() {
-      exceptionListPool.release(exceptions);
+      if (exceptions != null) {
+        throwableListPool.release(exceptions);
+      }
       exceptions = null;
       for (DataFetcher<Data> fetcher : fetchers) {
         fetcher.cleanup();
@@ -111,18 +117,20 @@ class MultiModelLoader<Model, Data> implements ModelLoader<Model, Data> {
       }
     }
 
+    @NonNull
     @Override
     public Class<Data> getDataClass() {
       return fetchers.get(0).getDataClass();
     }
 
+    @NonNull
     @Override
     public DataSource getDataSource() {
       return fetchers.get(0).getDataSource();
     }
 
     @Override
-    public void onDataReady(Data data) {
+    public void onDataReady(@Nullable Data data) {
       if (data != null) {
         callback.onDataReady(data);
       } else {
@@ -131,8 +139,8 @@ class MultiModelLoader<Model, Data> implements ModelLoader<Model, Data> {
     }
 
     @Override
-    public void onLoadFailed(Exception e) {
-      exceptions.add(e);
+    public void onLoadFailed(@NonNull Exception e) {
+      Preconditions.checkNotNull(exceptions).add(e);
       startNextOrFail();
     }
 
@@ -141,6 +149,7 @@ class MultiModelLoader<Model, Data> implements ModelLoader<Model, Data> {
         currentIndex++;
         loadData(priority, callback);
       } else {
+        Preconditions.checkNotNull(exceptions);
         callback.onLoadFailed(new GlideException("Fetch failed", new ArrayList<>(exceptions)));
       }
     }

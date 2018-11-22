@@ -1,11 +1,8 @@
 package com.bumptech.glide.load.resource.bitmap;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
-
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
-
 import java.security.MessageDigest;
 
 /**
@@ -19,19 +16,9 @@ public class CenterCrop extends BitmapTransformation {
   private static final String ID = "com.bumptech.glide.load.resource.bitmap.CenterCrop";
   private static final byte[] ID_BYTES = ID.getBytes(CHARSET);
 
-  public CenterCrop(Context context) {
-    super(context);
-  }
-
-  public CenterCrop(BitmapPool bitmapPool) {
-    super(bitmapPool);
-  }
-
-  // Bitmap doesn't implement equals, so == and .equals are equivalent here.
-  @SuppressWarnings("PMD.CompareObjectsWithEquals")
   @Override
-  protected Bitmap transform(@NonNull BitmapPool pool, @NonNull Bitmap toTransform, int outWidth,
-      int outHeight) {
+  protected Bitmap transform(
+      @NonNull BitmapPool pool, @NonNull Bitmap toTransform, int outWidth, int outHeight) {
     return TransformationUtils.centerCrop(pool, toTransform, outWidth, outHeight);
   }
 
@@ -46,7 +33,7 @@ public class CenterCrop extends BitmapTransformation {
   }
 
   @Override
-  public void updateDiskCacheKey(MessageDigest messageDigest) {
+  public void updateDiskCacheKey(@NonNull MessageDigest messageDigest) {
     messageDigest.update(ID_BYTES);
   }
 }

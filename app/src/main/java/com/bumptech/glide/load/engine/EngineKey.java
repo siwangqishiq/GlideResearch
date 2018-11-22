@@ -1,10 +1,10 @@
 package com.bumptech.glide.load.engine;
 
+import android.support.annotation.NonNull;
 import com.bumptech.glide.load.Key;
 import com.bumptech.glide.load.Options;
 import com.bumptech.glide.load.Transformation;
 import com.bumptech.glide.util.Preconditions;
-
 import java.security.MessageDigest;
 import java.util.Map;
 
@@ -22,9 +22,15 @@ class EngineKey implements Key {
   private final Options options;
   private int hashCode;
 
-  public EngineKey(Object model, Key signature, int width, int height,
-                   Map<Class<?>, Transformation<?>> transformations, Class<?> resourceClass,
-                   Class<?> transcodeClass, Options options) {
+  EngineKey(
+      Object model,
+      Key signature,
+      int width,
+      int height,
+      Map<Class<?>, Transformation<?>> transformations,
+      Class<?> resourceClass,
+      Class<?> transcodeClass,
+      Options options) {
     this.model = Preconditions.checkNotNull(model);
     this.signature = Preconditions.checkNotNull(signature, "Signature must not be null");
     this.width = width;
@@ -84,8 +90,7 @@ class EngineKey implements Key {
   }
 
   @Override
-  public void updateDiskCacheKey(MessageDigest messageDigest) {
+  public void updateDiskCacheKey(@NonNull MessageDigest messageDigest) {
     throw new UnsupportedOperationException();
   }
-
 }

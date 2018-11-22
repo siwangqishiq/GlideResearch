@@ -8,15 +8,17 @@ import com.bumptech.glide.load.Key;
 import com.bumptech.glide.load.Options;
 import com.bumptech.glide.load.ResourceEncoder;
 import com.bumptech.glide.load.Transformation;
+import com.bumptech.glide.load.engine.DecodeJob.DiskCacheProvider;
+import com.bumptech.glide.load.engine.bitmap_recycle.ArrayPool;
 import com.bumptech.glide.load.engine.cache.DiskCache;
 import com.bumptech.glide.load.model.ModelLoader;
 import com.bumptech.glide.load.model.ModelLoader.LoadData;
 import com.bumptech.glide.load.resource.UnitTransformation;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 final class DecodeHelper<Transcode> {
 
@@ -28,7 +30,7 @@ final class DecodeHelper<Transcode> {
   private int width;
   private int height;
   private Class<?> resourceClass;
-  private DecodeJob.DiskCacheProvider diskCacheProvider;
+  private DiskCacheProvider diskCacheProvider;
   private Options options;
   private Map<Class<?>, Transformation<?>> transformations;
   private Class<Transcode> transcodeClass;
@@ -38,9 +40,10 @@ final class DecodeHelper<Transcode> {
   private Priority priority;
   private DiskCacheStrategy diskCacheStrategy;
   private boolean isTransformationRequired;
+  private boolean isScaleOnlyOrNoTransform;
 
   @SuppressWarnings("unchecked")
-  <R> DecodeHelper<R> init(
+  <R> void init(
       GlideContext glideContext,
       Object model,
       Key signature,
@@ -53,7 +56,8 @@ final class DecodeHelper<Transcode> {
       Options options,
       Map<Class<?>, Transformation<?>> transformations,
       boolean isTransformationRequired,
-      DecodeJob.DiskCacheProvider diskCacheProvider) {
+      boolean isScaleOnlyOrNoTransform,
+      DiskCacheProvider diskCacheProvider) {
     this.glideContext = glideContext;
     this.model = model;
     this.signature = signature;
@@ -67,12 +71,8 @@ final class DecodeHelper<Transcode> {
     this.options = options;
     this.transformations = transformations;
     this.isTransformationRequired = isTransformationRequired;
+    this.isScaleOnlyOrNoTransform = isScaleOnlyOrNoTransform;
 
-    return (DecodeHelper<R>) this;
-  }
-
-  Object getModel() {
-    return model;
   }
 
   void clear() {
@@ -120,6 +120,18 @@ final class DecodeHelper<Transcode> {
     return height;
   }
 
+  ArrayPool getArrayPool() {
+    return glideContext.getArrayPool();
+  }
+
+  Class<?> getTranscodeClass() {
+    return transcodeClass;
+  }
+
+  Class<?> getModelClass() {
+    return model.getClass();
+  }
+
   List<Class<?>> getRegisteredResourceClasses() {
     return glideContext.getRegistry()
         .getRegisteredResourceClasses(model.getClass(), resourceClass, transcodeClass);
@@ -133,10 +145,23 @@ final class DecodeHelper<Transcode> {
     return glideContext.getRegistry().getLoadPath(dataClass, resourceClass, transcodeClass);
   }
 
+  boolean isScaleOnlyOrNoTransform() {
+    return isScaleOnlyOrNoTransform;
+  }
+
   @SuppressWarnings("unchecked")
   <Z> Transformation<Z> getTransformation(Class<Z> resourceClass) {
     Transformation<Z> result = (Transformation<Z>) transformations.get(resourceClass);
-     if (result == null) {
+    if (result == null) {
+      for (Entry<Class<?>, Transformation<?>> entry : transformations.entrySet()) {
+        if (entry.getKey().isAssignableFrom(resourceClass)) {
+          result = (Transformation<Z>) entry.getValue();
+          break;
+        }
+      }
+    }
+
+    if (result == null) {
       if (transformations.isEmpty() && isTransformationRequired) {
         throw new IllegalArgumentException(
             "Missing transformation for " + resourceClass + ". If you wish to"
@@ -163,8 +188,8 @@ final class DecodeHelper<Transcode> {
 
   boolean isSourceKey(Key key) {
     List<LoadData<?>> loadData = getLoadData();
-    int size = loadData.size();
-    for (int i = 0; i < size; i++) {
+    //noinspection ForLoopReplaceableByForEach to improve perf
+    for (int i = 0, size = loadData.size(); i < size; i++) {
       LoadData<?> current = loadData.get(i);
       if (current.sourceKey.equals(key)) {
         return true;
@@ -178,8 +203,8 @@ final class DecodeHelper<Transcode> {
       isLoadDataSet = true;
       loadData.clear();
       List<ModelLoader<Object, ?>> modelLoaders = glideContext.getRegistry().getModelLoaders(model);
-      int size = modelLoaders.size();
-      for (int i = 0; i < size; i++) {
+      //noinspection ForLoopReplaceableByForEach to improve perf
+      for (int i = 0, size = modelLoaders.size(); i < size; i++) {
         ModelLoader<Object, ?> modelLoader = modelLoaders.get(i);
         LoadData<?> current =
             modelLoader.buildLoadData(model, width, height, options);
@@ -196,11 +221,17 @@ final class DecodeHelper<Transcode> {
       isCacheKeysSet = true;
       cacheKeys.clear();
       List<LoadData<?>> loadData = getLoadData();
-      int size = loadData.size();
-      for (int i = 0; i < size; i++) {
+      //noinspection ForLoopReplaceableByForEach to improve perf
+      for (int i = 0, size = loadData.size(); i < size; i++) {
         LoadData<?> data = loadData.get(i);
-        cacheKeys.add(data.sourceKey);
-        cacheKeys.addAll(data.alternateKeys);
+        if (!cacheKeys.contains(data.sourceKey)) {
+          cacheKeys.add(data.sourceKey);
+        }
+        for (int j = 0; j < data.alternateKeys.size(); j++) {
+          if (!cacheKeys.contains(data.alternateKeys.get(j))) {
+            cacheKeys.add(data.alternateKeys.get(j));
+          }
+        }
       }
     }
     return cacheKeys;

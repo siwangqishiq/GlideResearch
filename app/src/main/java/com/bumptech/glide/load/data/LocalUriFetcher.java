@@ -2,11 +2,10 @@ package com.bumptech.glide.load.data;
 
 import android.content.ContentResolver;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.util.Log;
-
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.DataSource;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
@@ -31,13 +30,16 @@ public abstract class LocalUriFetcher<T> implements DataFetcher<T> {
    *                by {@link ContentResolver#openInputStream(Uri)}
    * @see ContentResolver#openInputStream(Uri)
    */
+  // Public API.
+  @SuppressWarnings("WeakerAccess")
   public LocalUriFetcher(ContentResolver contentResolver, Uri uri) {
     this.contentResolver = contentResolver;
     this.uri = uri;
   }
 
   @Override
-  public final void loadData(Priority priority, DataCallback<? super T> callback) {
+  public final void loadData(@NonNull Priority priority,
+      @NonNull DataCallback<? super T> callback) {
     try {
       data = loadResource(uri, contentResolver);
     } catch (FileNotFoundException e) {
@@ -66,6 +68,7 @@ public abstract class LocalUriFetcher<T> implements DataFetcher<T> {
     // Do nothing.
   }
 
+  @NonNull
   @Override
   public DataSource getDataSource() {
     return DataSource.LOCAL;

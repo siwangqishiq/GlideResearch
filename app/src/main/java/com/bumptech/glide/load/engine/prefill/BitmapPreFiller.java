@@ -3,12 +3,11 @@ package com.bumptech.glide.load.engine.prefill;
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Looper;
-
+import android.support.annotation.VisibleForTesting;
 import com.bumptech.glide.load.DecodeFormat;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.load.engine.cache.MemoryCache;
 import com.bumptech.glide.util.Util;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,6 +31,7 @@ public final class BitmapPreFiller {
     this.defaultFormat = defaultFormat;
   }
 
+  @SuppressWarnings("deprecation")
   public void preFill(PreFillType.Builder... bitmapAttributeBuilders) {
     if (current != null) {
       current.cancel();
@@ -41,7 +41,8 @@ public final class BitmapPreFiller {
     for (int i = 0; i < bitmapAttributeBuilders.length; i++) {
       PreFillType.Builder builder = bitmapAttributeBuilders[i];
       if (builder.getConfig() == null) {
-        builder.setConfig(defaultFormat == DecodeFormat.PREFER_ARGB_8888
+        builder.setConfig(
+            defaultFormat == DecodeFormat.PREFER_ARGB_8888
             ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565);
       }
       bitmapAttributes[i] = builder.build();
@@ -52,9 +53,9 @@ public final class BitmapPreFiller {
     handler.post(current);
   }
 
-  // Visible for testing.
+  @VisibleForTesting
   PreFillQueue generateAllocationOrder(PreFillType... preFillSizes) {
-    final int maxSize =
+    final long maxSize =
         memoryCache.getMaxSize() - memoryCache.getCurrentSize() + bitmapPool.getMaxSize();
 
     int totalWeight = 0;

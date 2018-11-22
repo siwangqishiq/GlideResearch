@@ -1,7 +1,6 @@
 package com.bumptech.glide.gifdecoder;
 
 import android.support.annotation.ColorInt;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +14,11 @@ import java.util.List;
  */
 public class GifHeader {
 
+  /** The "Netscape" loop count which means loop forever. */
+  public static final int NETSCAPE_LOOP_COUNT_FOREVER = 0;
+  /** Indicates that this header has no "Netscape" loop count. */
+  public static final int NETSCAPE_LOOP_COUNT_DOES_NOT_EXIST = -1;
+
   @ColorInt
   int[] gct = null;
   @GifDecoder.GifDecodeStatus
@@ -22,7 +26,7 @@ public class GifHeader {
   int frameCount = 0;
 
   GifFrame currentFrame;
-  List<GifFrame> frames = new ArrayList<>();
+  final List<GifFrame> frames = new ArrayList<>();
   /** Logical screen size: Full image width. */
   int width;
   /** Logical screen size: Full image height. */
@@ -44,7 +48,7 @@ public class GifHeader {
   int pixelAspect;
   @ColorInt
   int bgColor;
-  int loopCount;
+  int loopCount = NETSCAPE_LOOP_COUNT_DOES_NOT_EXIST;
 
   public int getHeight() {
     return height;

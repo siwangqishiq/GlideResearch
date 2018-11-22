@@ -4,13 +4,13 @@ import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 
 /**
- * An {@link com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool BitmapPool} implementation
+ * An {@link BitmapPool BitmapPool} implementation
  * that rejects all {@link Bitmap Bitmap}s added to it and always returns {@code
  * null} from get.
  */
 public class BitmapPoolAdapter implements BitmapPool {
   @Override
-  public int getMaxSize() {
+  public long getMaxSize() {
     return 0;
   }
 

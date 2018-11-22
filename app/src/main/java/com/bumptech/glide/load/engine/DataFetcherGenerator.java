@@ -1,19 +1,18 @@
 package com.bumptech.glide.load.engine;
 
 import android.support.annotation.Nullable;
-
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.Key;
 import com.bumptech.glide.load.data.DataFetcher;
 
 /**
- * Generates a series of {@link com.bumptech.glide.load.data.DataFetcher DataFetchers} using
+ * Generates a series of {@link DataFetcher DataFetchers} using
  * registered {@link com.bumptech.glide.load.model.ModelLoader ModelLoaders} and a model.
  */
 interface DataFetcherGenerator {
   /**
    * Called when the generator has finished loading data from a
-   * {@link com.bumptech.glide.load.data.DataFetcher}.
+   * {@link DataFetcher}.
    */
   interface FetcherReadyCallback {
 
@@ -47,8 +46,8 @@ interface DataFetcherGenerator {
   }
 
   /**
-   * Attempts to a single new {@link com.bumptech.glide.load.data.DataFetcher} and returns true if
-   * a {@link com.bumptech.glide.load.data.DataFetcher} was started, and false otherwise.
+   * Attempts to a single new {@link DataFetcher} and returns true if
+   * a {@link DataFetcher} was started, and false otherwise.
    */
   boolean startNext();
 

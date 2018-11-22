@@ -1,7 +1,6 @@
 package com.bumptech.glide.load.engine.cache;
 
 import android.content.Context;
-
 import java.io.File;
 
 /**
@@ -9,7 +8,12 @@ import java.io.File;
  * disk cache directory.
  *
  * <p><b>Images can be read by everyone when using external disk cache.</b>
+ *
+ * @deprecated use {@link ExternalPreferredCacheDiskCacheFactory} instead.
  */
+// Public API.
+@SuppressWarnings({"unused", "WeakerAccess"})
+@Deprecated
 public final class ExternalCacheDiskCacheFactory extends DiskLruCacheFactory {
 
   public ExternalCacheDiskCacheFactory(Context context) {

@@ -5,7 +5,7 @@ import android.support.annotation.NonNull;
 
 /**
  * A factory class that produces a functional
- * {@link com.bumptech.glide.manager.ConnectivityMonitor}.
+ * {@link ConnectivityMonitor}.
  */
 public interface ConnectivityMonitorFactory {
 

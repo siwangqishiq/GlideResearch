@@ -1,7 +1,8 @@
 package com.bumptech.glide.load.resource.bitmap;
 
 import android.graphics.drawable.BitmapDrawable;
-
+import android.support.annotation.NonNull;
+import com.bumptech.glide.load.engine.Initializable;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.load.resource.drawable.DrawableResource;
 import com.bumptech.glide.util.Util;
@@ -13,17 +14,21 @@ import com.bumptech.glide.util.Util;
  * <p> This class ensures that every call to {@link #get()}} always returns a new
  * {@link BitmapDrawable} to avoid rendering issues if used in multiple
  * views and is also responsible for returning the underlying {@link android.graphics.Bitmap} to the
- * given {@link com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool} when the resource is
+ * given {@link BitmapPool} when the resource is
  * recycled. </p>
  */
-public class BitmapDrawableResource extends DrawableResource<BitmapDrawable> {
+public class BitmapDrawableResource extends DrawableResource<BitmapDrawable>
+    implements Initializable {
   private final BitmapPool bitmapPool;
 
+  // Public API.
+  @SuppressWarnings("WeakerAccess")
   public BitmapDrawableResource(BitmapDrawable drawable, BitmapPool bitmapPool) {
     super(drawable);
     this.bitmapPool = bitmapPool;
   }
 
+  @NonNull
   @Override
   public Class<BitmapDrawable> getResourceClass() {
     return BitmapDrawable.class;
@@ -37,5 +42,10 @@ public class BitmapDrawableResource extends DrawableResource<BitmapDrawable> {
   @Override
   public void recycle() {
     bitmapPool.put(drawable.getBitmap());
+  }
+
+  @Override
+  public void initialize() {
+    drawable.getBitmap().prepareToDraw();
   }
 }

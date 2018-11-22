@@ -3,7 +3,6 @@ package com.bumptech.glide.request.transition;
 import android.content.Context;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-
 import com.bumptech.glide.load.DataSource;
 
 /**
@@ -15,6 +14,8 @@ public class ViewAnimationFactory<R> implements TransitionFactory<R> {
   private final ViewTransition.ViewTransitionAnimationFactory viewTransitionAnimationFactory;
   private Transition<R> transition;
 
+  // Public API.
+  @SuppressWarnings("unused")
   public ViewAnimationFactory(Animation animation) {
     this(new ConcreteViewTransitionAnimationFactory(animation));
   }
@@ -53,7 +54,7 @@ public class ViewAnimationFactory<R> implements TransitionFactory<R> {
       .ViewTransitionAnimationFactory {
     private final Animation animation;
 
-    public ConcreteViewTransitionAnimationFactory(Animation animation) {
+    ConcreteViewTransitionAnimationFactory(Animation animation) {
       this.animation = animation;
     }
 
@@ -67,7 +68,7 @@ public class ViewAnimationFactory<R> implements TransitionFactory<R> {
       .ViewTransitionAnimationFactory {
     private final int animationId;
 
-    public ResourceViewTransitionAnimationFactory(int animationId) {
+    ResourceViewTransitionAnimationFactory(int animationId) {
       this.animationId = animationId;
     }
 
